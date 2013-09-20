@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys,json,jubatus
+import jubatus
 from jubatus.common import Datum
+
 
 def parse_args():
     from optparse import OptionParser, OptionValueError
@@ -14,6 +15,7 @@ def parse_args():
     p.add_option('-n', '--name', action='store',
                  dest='name', type='string', default='tutorial')
     return p.parse_args()
+
 
 def get_most_likely(estm):
     ans = None
@@ -34,17 +36,22 @@ def get_most_likely(estm):
 if __name__ == '__main__':
     options, remainder = parse_args()
 
-    classifier = jubatus.Classifier(options.server_ip,options.server_port,options.name)
+    classifier = jubatus.Classifier(options.server_ip, options.server_port, options.name)
 
     print classifier.get_config()
     print classifier.get_status()
 
-
     for line in open('train.dat'):
         label, file = line[:-1].split(',')
         dat = open(file).read()
+
+        # JSON format
+        #   {
+        #     "string_value_key": "string",
+        #     "num_value_key : number
+        #   }
         datum = Datum({"message": dat})
-#                           ([sv(=string vector)], [nv(=number vector)])
+
         classifier.train([(label,datum)])
 
     print classifier.get_status()
@@ -57,9 +64,11 @@ if __name__ == '__main__':
 
     for line in open('test.dat'):
         label, file = line[:-1].split(',')
-        dat = open(file).read()        
+        dat = open(file).read()
         datum = Datum({"message": dat})
+
         ans = classifier.classify([(datum)])
+
         if ans != None:
             estm = get_most_likely(ans[0])
             if (label == estm[0]):
@@ -67,5 +76,4 @@ if __name__ == '__main__':
             else:
                 result = "NG"
             print result + "," + label + ", " + estm[0] + ", " + str(estm[1])
-
 
